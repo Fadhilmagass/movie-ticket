@@ -34,7 +34,7 @@ Route::prefix('auth/google')->group(function () {
 // Authenticated User Routes
 Route::middleware('auth')->group(function () {
     // Dashboard
-    Route::view('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
 
     // Profile
     Route::prefix('profile')->name('profile.')->group(function () {
@@ -59,7 +59,7 @@ Route::middleware('auth')->prefix('reviews')->name('reviews.')->group(function (
 // Admin Routes
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     // Admin Dashboard
-    Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
+    Route::get('dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
 
     // Movie Management
     Route::resource('movies', AdminMovieController::class)->except(['show']);
