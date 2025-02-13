@@ -59,7 +59,7 @@ Route::middleware('auth')->prefix('reviews')->name('reviews.')->group(function (
 // Admin Routes
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     // Admin Dashboard
-    Route::view('/dashboard', 'admin.dashboard')->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
 
     // Movie Management
     Route::resource('movies', AdminMovieController::class)->except(['show']);
