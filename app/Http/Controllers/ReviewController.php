@@ -23,59 +23,20 @@ class ReviewController extends Controller
      */
     public function store(Request $request)
     {
-        try {
-            $validated = $request->validate([
-                'movie_id' => 'required|exists:movies,id',
-                'rating' => 'required|numeric|min:1|max:5',
-                'comment' => 'nullable|string|max:500',
-            ]);
+        $validated = $request->validate([
+            'movie_id' => 'required|exists:movies,id',
+            'rating' => 'required|integer|min:1|max:5',
+            'comment' => 'nullable|string|max:500'
+        ]);
 
-            // Check if movie exists and is active
-            $movie = Movie::findOrFail($validated['movie_id']);
+        $review = Review::updateOrCreate(
+            ['user_id' => Auth::id(), 'movie_id' => $validated['movie_id']],
+            $validated
+        );
 
-            // Check if user has already reviewed this movie
-            $existingReview = Review::where('user_id', Auth::id())
-                ->where('movie_id', $validated['movie_id'])
-                ->first();
+        $this->updateMovieRating($validated['movie_id']);
 
-            DB::beginTransaction();
-            try {
-                Review::updateOrCreate(
-                    [
-                        'user_id' => Auth::id(),
-                        'movie_id' => $validated['movie_id'],
-                    ],
-                    [
-                        'rating' => $validated['rating'],
-                        'comment' => $validated['comment'] ?? null,
-                    ]
-                );
-
-                $this->updateMovieRating($validated['movie_id']);
-                DB::commit();
-
-                $message = $existingReview ? 'Review updated successfully!' : 'Review submitted successfully!';
-
-                if ($request->expectsJson()) {
-                    return response()->json(['message' => $message], 200);
-                }
-
-                return back()->with('success', $message);
-            } catch (\Exception $e) {
-                DB::rollBack();
-                throw $e;
-            }
-        } catch (ValidationException $e) {
-            if ($request->expectsJson()) {
-                return response()->json(['errors' => $e->errors()], 422);
-            }
-            throw $e;
-        } catch (\Exception $e) {
-            if ($request->expectsJson()) {
-                return response()->json(['error' => 'Failed to submit review'], 500);
-            }
-            return back()->with('error', 'Failed to submit review. Please try again.');
-        }
+        return response()->json(['success' => true]);
     }
 
     /**
@@ -87,47 +48,17 @@ class ReviewController extends Controller
      */
     public function update(Request $request, Review $review)
     {
-        try {
-            $this->authorize('update', $review);
+        $this->authorize('update', $review);
 
-            $validated = $request->validate([
-                'rating' => 'required|numeric|min:1|max:5',
-                'comment' => 'nullable|string|max:500',
-            ]);
+        $validated = $request->validate([
+            'rating' => 'required|integer|min:1|max:5',
+            'comment' => 'nullable|string|max:500'
+        ]);
 
-            DB::beginTransaction();
-            try {
-                $review->update([
-                    'rating' => $validated['rating'],
-                    'comment' => $validated['comment'] ?? null,
-                ]);
+        $review->update($validated);
+        $this->updateMovieRating($review->movie_id);
 
-                $this->updateMovieRating($review->movie_id);
-                DB::commit();
-
-                if ($request->expectsJson()) {
-                    return response()->json([
-                        'message' => 'Review updated successfully!',
-                        'review' => $review->fresh()
-                    ]);
-                }
-
-                return back()->with('success', 'Review updated successfully!');
-            } catch (\Exception $e) {
-                DB::rollBack();
-                throw $e;
-            }
-        } catch (ValidationException $e) {
-            if ($request->expectsJson()) {
-                return response()->json(['errors' => $e->errors()], 422);
-            }
-            throw $e;
-        } catch (\Exception $e) {
-            if ($request->expectsJson()) {
-                return response()->json(['error' => 'Failed to update review'], 500);
-            }
-            return back()->with('error', 'Failed to update review. Please try again.');
-        }
+        return response()->json(['success' => true]);
     }
 
     /**

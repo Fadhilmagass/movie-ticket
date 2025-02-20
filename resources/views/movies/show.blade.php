@@ -1,4 +1,4 @@
-<x-app-layout>
+script<x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
             {{ $movie->title ?? 'Movie Details' }}
@@ -72,11 +72,71 @@
                             <div class="flex justify-between items-center mb-6">
                                 <h3 class="text-xl font-semibold">User Reviews</h3>
                                 @auth
-                                    <button onclick="toggleReviewForm()"
+                                    <!-- Tombol Trigger -->
+                                    <button onclick="toggleReviewModal()"
                                         class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition"
                                         id="write-review-btn">
                                         Write a Review
                                     </button>
+                                    <!-- Modal -->
+                                    <div id="review-modal"
+                                        class="hidden fixed inset-0 z-50 overflow-auto bg-black bg-opacity-50">
+                                        <div class="relative flex items-center justify-center min-h-screen px-4">
+                                            <!-- Modal Content -->
+                                            <div
+                                                class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6">
+                                                <!-- Header -->
+                                                <div class="flex justify-between items-center mb-4">
+                                                    <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-200">Write
+                                                        a Review</h3>
+                                                    <button onclick="toggleReviewModal()"
+                                                        class="text-gray-500 hover:text-gray-700 dark:text-gray-400">
+                                                        &times;
+                                                    </button>
+                                                </div>
+
+                                                <!-- Form -->
+                                                <form id="submit-review" action="{{ route('reviews.store') }}"
+                                                    method="POST">
+                                                    @csrf
+                                                    <input type="hidden" name="movie_id" value="{{ $movie->id }}">
+
+                                                    <div class="mb-4">
+                                                        <label class="block text-gray-700 dark:text-gray-300 mb-2">Your
+                                                            Rating</label>
+                                                        <select name="rating"
+                                                            class="w-full rounded-lg border-gray-300 shadow-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+                                                            required>
+                                                            <option value="">Select Rating</option>
+                                                            @for ($i = 1; $i <= 5; $i++)
+                                                                <option value="{{ $i }}">{{ $i }}
+                                                                    Star{{ $i > 1 ? 's' : '' }}</option>
+                                                            @endfor
+                                                        </select>
+                                                    </div>
+
+                                                    <div class="mb-4">
+                                                        <label class="block text-gray-700 dark:text-gray-300 mb-2">Your
+                                                            Review</label>
+                                                        <textarea name="comment" rows="3"
+                                                            class="w-full rounded-lg border-gray-300 shadow-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+                                                            placeholder="Share your thoughts..." required></textarea>
+                                                    </div>
+
+                                                    <div class="flex justify-end gap-2">
+                                                        <button type="button" onclick="toggleReviewModal()"
+                                                            class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
+                                                            Cancel
+                                                        </button>
+                                                        <button type="submit"
+                                                            class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg">
+                                                            Submit Review
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
                                 @endauth
                             </div>
 
@@ -102,18 +162,84 @@
                                                     <button class="text-blue-500 hover:text-blue-700 text-sm edit-btn"
                                                         data-id="{{ $review->id }}" data-rating="{{ $review->rating }}"
                                                         data-comment="{{ htmlspecialchars($review->comment, ENT_QUOTES, 'UTF-8') }}"
-                                                        onclick="editReview(this)">
+                                                        onclick="editReview(event)">
                                                         Edit Review
                                                     </button>
+
+                                                    <!-- Modal Edit Review -->
+                                                    <div id="edit-modal"
+                                                        class="hidden fixed inset-0 z-50 overflow-auto bg-black bg-opacity-50">
+                                                        <div
+                                                            class="relative flex items-center justify-center min-h-screen px-4">
+                                                            <div
+                                                                class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6">
+                                                                <!-- Header -->
+                                                                <div class="flex justify-between items-center mb-4">
+                                                                    <h3
+                                                                        class="text-xl font-semibold text-gray-800 dark:text-gray-200">
+                                                                        Edit Review</h3>
+                                                                    <button onclick="closeEditModal()"
+                                                                        class="text-gray-500 hover:text-gray-700 dark:text-gray-400">
+                                                                        &times;
+                                                                    </button>
+                                                                </div>
+
+                                                                <!-- Form -->
+                                                                <form id="edit-review-form" class="space-y-4">
+                                                                    @csrf
+                                                                    @method('PUT')
+
+                                                                    <div>
+                                                                        <label
+                                                                            class="block text-gray-700 dark:text-gray-300 mb-2">Rating</label>
+                                                                        <select id="edit-rating" name="rating"
+                                                                            class="w-full rounded-lg border-gray-300 shadow-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+                                                                            required>
+                                                                            @for ($i = 1; $i <= 5; $i++)
+                                                                                <option value="{{ $i }}">
+                                                                                    {{ $i }}
+                                                                                    Star{{ $i > 1 ? 's' : '' }}</option>
+                                                                            @endfor
+                                                                        </select>
+                                                                    </div>
+
+                                                                    <div>
+                                                                        <label
+                                                                            class="block text-gray-700 dark:text-gray-300 mb-2">Review</label>
+                                                                        <textarea id="edit-comment" name="comment"
+                                                                            class="w-full rounded-lg border-gray-300 shadow-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+                                                                            rows="3" required></textarea>
+                                                                    </div>
+
+                                                                    <div class="flex justify-end gap-2">
+                                                                        <button type="button" onclick="closeEditModal()"
+                                                                            class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
+                                                                            Cancel
+                                                                        </button>
+                                                                        <button type="submit"
+                                                                            class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg">
+                                                                            Update Review
+                                                                        </button>
+                                                                    </div>
+                                                                </form>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 @endcan
 
-                                                @can('delete', $review)
-                                                    <button class="text-red-500 hover:text-red-700 text-sm delete-btn"
-                                                        data-id="{{ $review->id }}"
-                                                        onclick="deleteReview({{ $review->id }})">
-                                                        Delete Review
-                                                    </button>
-                                                @endcan
+                                                <!-- Tambahkan ini untuk admin -->
+                                                @role('admin')
+                                                    <form action="{{ route('admin.reviews.destroy', $review) }}"
+                                                        method="POST" class="inline">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit"
+                                                            class="text-red-500 hover:text-red-700 text-sm"
+                                                            onclick="return confirm('Delete this review permanently?')">
+                                                            Delete as Admin
+                                                        </button>
+                                                    </form>
+                                                @endrole
                                             </div>
                                         </div>
                                     @endforeach
@@ -132,121 +258,208 @@
         </div>
     </div>
 
-    @push('scripts')
-        <script>
-            function toggleReviewForm() {
-                const form = document.getElementById('review-form');
-                if (form) {
-                    form.classList.toggle('hidden');
-                }
+    <script>
+        // Modal review
+        // Toggle Modal
+        function toggleReviewModal() {
+            const modal = document.getElementById('review-modal');
+            modal.classList.toggle('hidden');
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('review-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                toggleReviewModal();
             }
+        });
 
-            function editReview(button) {
-                const reviewId = button.getAttribute('data-id');
-                const rating = button.getAttribute('data-rating');
-                const comment = button.getAttribute('data-comment');
+        // Handle form submission
+        document.getElementById('submit-review').addEventListener('submit', function(e) {
+            e.preventDefault();
 
-                // Show edit form logic here
-                Swal.fire({
-                    title: 'Edit Review',
-                    html: `
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Rating</label>
-                            <input type="number" id="edit-rating" class="mt-1 block w-full rounded-md" 
-                                   min="1" max="5" step="0.5" value="${rating}">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Comment</label>
-                            <textarea id="edit-comment" class="mt-1 block w-full rounded-md" 
-                                      rows="3">${comment}</textarea>
-                        </div>
-                    </div>
-                `,
-                    showCancelButton: true,
-                    confirmButtonText: 'Update',
-                    preConfirm: () => {
-                        return {
-                            rating: document.getElementById('edit-rating').value,
-                            comment: document.getElementById('edit-comment').value
-                        }
+            fetch(this.action, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: new FormData(this)
+                })
+                .then(response => {
+                    if (response.ok) {
+                        toggleReviewModal();
+                        location.reload();
+                    } else {
+                        alert('Failed to submit review');
                     }
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        updateReview(reviewId, result.value.rating, result.value.comment);
+                })
+                .catch(error => console.error('Error:', error));
+        });
+
+        // Handle form submission
+        document.getElementById('submit-review').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            fetch(this.action, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: new FormData(this)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Failed to submit review');
                     }
+                })
+                .catch(error => console.error('Error:', error));
+        });
+
+        function submitReview(data) {
+            fetch('{{ route('reviews.store') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(() => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Review Submitted!',
+                        showConfirmButton: false,
+                        timer: 1500
+                    });
+                    setTimeout(() => location.reload(), 1500);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Failed to submit review',
+                        text: 'Please try again later'
+                    });
                 });
-            }
+        }
+        // Modal review end
 
-            function updateReview(reviewId, rating, comment) {
-                fetch(`/reviews/${reviewId}`, {
-                        method: 'PUT',
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            rating,
-                            comment
+        // Modal edit review
+        let currentReviewId = null;
+
+        function editReview(event) {
+            event.preventDefault();
+            const button = event.currentTarget;
+
+            // Ambil data dari atribut button
+            currentReviewId = button.dataset.id;
+            const rating = button.dataset.rating;
+            const comment = button.dataset.comment;
+
+            // Isi form
+            document.getElementById('edit-rating').value = rating;
+            document.getElementById('edit-comment').value = comment;
+
+            // Tampilkan modal
+            document.getElementById('edit-modal').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-modal').classList.add('hidden');
+            currentReviewId = null;
+        }
+
+        // Handle form submission
+        document.getElementById('edit-review-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = {
+                rating: this.rating.value,
+                comment: this.comment.value
+            };
+
+            fetch(`/reviews/${currentReviewId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => {
+                    if (response.ok) {
+                        closeEditModal();
+                        location.reload();
+                    } else {
+                        alert('Failed to update review');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        });
+
+        // Close modal ketika klik di luar
+        document.getElementById('edit-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeEditModal();
+            }
+        });
+        // Modal edit review end
+
+        function deleteReview(reviewId, isAdmin = false) {
+            const url = isAdmin ? `/admin/reviews/${reviewId}` : `/reviews/${reviewId}`;
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'You won\'t be able to revert this!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(url, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                'Content-Type': 'application/json'
+                            }
                         })
-                    })
-                    .then(response => {
-                        if (!response.ok) throw new Error('Failed to update review');
-                        return response.json();
-                    })
-                    .then(() => {
-                        Swal.fire('Success', 'Review updated successfully', 'success')
-                            .then(() => location.reload());
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        Swal.fire('Error', 'Failed to update review', 'error');
-                    });
-            }
-
-            function deleteReview(reviewId) {
-                Swal.fire({
-                    title: 'Are you sure?',
-                    text: 'You won\'t be able to revert this!',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#3085d6',
-                    confirmButtonText: 'Yes, delete it!'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        fetch(`/reviews/${reviewId}`, {
-                                method: 'DELETE',
-                                headers: {
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                                    'Content-Type': 'application/json'
-                                }
-                            })
-                            .then(response => {
-                                if (!response.ok) throw new Error('Failed to delete review');
-                                return response.json();
-                            })
-                            .then(() => {
-                                document.getElementById(`review-${reviewId}`).remove();
-                                Swal.fire('Deleted!', 'Your review has been deleted.', 'success');
-                            })
-                            .catch(error => {
-                                console.error('Error:', error);
-                                Swal.fire('Error', 'Failed to delete review', 'error');
-                            });
-                    }
-                });
-            }
-
-            // Error handling for images
-            document.addEventListener('DOMContentLoaded', function() {
-                const moviePoster = document.querySelector('img[alt="{{ $movie->title }}"]');
-                if (moviePoster) {
-                    moviePoster.addEventListener('error', function() {
-                        this.src = '{{ asset('images/default-poster.jpg') }}';
-                    });
+                        .then(response => {
+                            if (!response.ok) throw new Error('Failed to delete review');
+                            return response.json();
+                        })
+                        .then(() => {
+                            document.getElementById(`review-${reviewId}`).remove();
+                            Swal.fire('Deleted!', 'Review has been deleted.', 'success');
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire('Error', 'Failed to delete review', 'error');
+                        });
                 }
             });
-        </script>
-    @endpush
+        }
+
+        // Error handling for images
+        document.addEventListener('DOMContentLoaded', function() {
+            const moviePoster = document.querySelector('img[alt="{{ $movie->title }}"]');
+            if (moviePoster) {
+                moviePoster.addEventListener('error', function() {
+                    this.src = '{{ asset('images/default-poster.jpg') }}';
+                });
+            }
+        });
+    </script>
+
 </x-app-layout>

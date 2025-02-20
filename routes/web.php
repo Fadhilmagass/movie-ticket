@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MovieController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\Admin\MovieController as AdminMovieController;
+use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\DashboardController;
@@ -54,12 +55,17 @@ Route::prefix('movies')->name('movies.')->group(function () {
 Route::middleware('auth')->prefix('reviews')->name('reviews.')->group(function () {
     Route::post('/', [ReviewController::class, 'store'])->name('store');
     Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
+    Route::put('/reviews/{review}', [ReviewController::class, 'update'])
+        ->name('reviews.update');
 });
 
 // Admin Routes
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     // Admin Dashboard
     Route::get('dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
+
+    // Review
+    Route::delete('reviews/{review}', [AdminReviewController::class, 'destroy'])->name('reviews.destroy');
 
     // Movie Management
     Route::resource('movies', AdminMovieController::class)->except(['show']);
