@@ -55,8 +55,7 @@ Route::prefix('movies')->name('movies.')->group(function () {
 Route::middleware('auth')->prefix('reviews')->name('reviews.')->group(function () {
     Route::post('/', [ReviewController::class, 'store'])->name('store');
     Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
-    Route::put('/reviews/{review}', [ReviewController::class, 'update'])
-        ->name('reviews.update');
+    Route::put('/reviews/{review}', [ReviewController::class, 'update'])->name('reviews.update');
 });
 
 // Admin Routes

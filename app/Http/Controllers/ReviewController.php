@@ -48,17 +48,27 @@ class ReviewController extends Controller
      */
     public function update(Request $request, Review $review)
     {
-        $this->authorize('update', $review);
+        try {
+            $this->authorize('update', $review);
 
-        $validated = $request->validate([
-            'rating' => 'required|integer|min:1|max:5',
-            'comment' => 'nullable|string|max:500'
-        ]);
+            $validated = $request->validate([
+                'rating' => 'required|integer|min:1|max:5',
+                'comment' => 'nullable|string|max:500'
+            ]);
 
-        $review->update($validated);
-        $this->updateMovieRating($review->movie_id);
+            $review->update($validated);
+            $this->updateMovieRating($review->movie_id);
 
-        return response()->json(['success' => true]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Review updated successfully!'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

@@ -1,4 +1,4 @@
-script<x-app-layout>
+<x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
             {{ $movie->title ?? 'Movie Details' }}
@@ -187,12 +187,10 @@ script<x-app-layout>
                                                                 <!-- Form -->
                                                                 <form id="edit-review-form" class="space-y-4">
                                                                     @csrf
-                                                                    @method('PUT')
-
                                                                     <div>
                                                                         <label
                                                                             class="block text-gray-700 dark:text-gray-300 mb-2">Rating</label>
-                                                                        <select id="edit-rating" name="rating"
+                                                                        <select name="rating" id="edit-rating"
                                                                             class="w-full rounded-lg border-gray-300 shadow-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
                                                                             required>
                                                                             @for ($i = 1; $i <= 5; $i++)
@@ -206,21 +204,18 @@ script<x-app-layout>
                                                                     <div>
                                                                         <label
                                                                             class="block text-gray-700 dark:text-gray-300 mb-2">Review</label>
-                                                                        <textarea id="edit-comment" name="comment"
+                                                                        <textarea name="comment" id="edit-comment"
                                                                             class="w-full rounded-lg border-gray-300 shadow-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
                                                                             rows="3" required></textarea>
                                                                     </div>
 
-                                                                    <div class="flex justify-end gap-2">
-                                                                        <button type="button" onclick="closeEditModal()"
-                                                                            class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
-                                                                            Cancel
-                                                                        </button>
-                                                                        <button type="submit"
-                                                                            class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg">
-                                                                            Update Review
-                                                                        </button>
-                                                                    </div>
+                                                                    <button type="submit"
+                                                                        class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition">
+                                                                        Update Review
+                                                                    </button>
+
+                                                                    <!-- Tambahkan input hidden untuk method override -->
+                                                                    @method('PUT')
                                                                 </form>
                                                             </div>
                                                         </div>
@@ -357,20 +352,26 @@ script<x-app-layout>
         let currentReviewId = null;
 
         function editReview(event) {
-            event.preventDefault();
-            const button = event.currentTarget;
+            try {
+                event.preventDefault();
+                const button = event.currentTarget;
 
-            // Ambil data dari atribut button
-            currentReviewId = button.dataset.id;
-            const rating = button.dataset.rating;
-            const comment = button.dataset.comment;
+                currentReviewId = button.dataset.id;
+                const rating = button.dataset.rating;
+                const comment = decodeURIComponent(button.dataset.comment); // Decode HTML entities
 
-            // Isi form
-            document.getElementById('edit-rating').value = rating;
-            document.getElementById('edit-comment').value = comment;
+                if (!currentReviewId || !rating) {
+                    throw new Error('Invalid review data');
+                }
 
-            // Tampilkan modal
-            document.getElementById('edit-modal').classList.remove('hidden');
+                document.getElementById('edit-rating').value = rating;
+                document.getElementById('edit-comment').value = comment;
+                document.getElementById('edit-modal').classList.remove('hidden');
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to load review data');
+            }
         }
 
         function closeEditModal() {
@@ -382,29 +383,32 @@ script<x-app-layout>
         document.getElementById('edit-review-form').addEventListener('submit', function(e) {
             e.preventDefault();
 
-            const formData = {
-                rating: this.rating.value,
-                comment: this.comment.value
-            };
+            const formData = new FormData(this);
+            formData.append('_method', 'PUT'); // Untuk method override
 
             fetch(`/reviews/${currentReviewId}`, {
-                    method: 'PUT',
+                    method: 'POST', // Gunakan POST untuk method override
                     headers: {
-                        'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                         'Accept': 'application/json'
                     },
-                    body: JSON.stringify(formData)
+                    body: formData
                 })
-                .then(response => {
-                    if (response.ok) {
-                        closeEditModal();
-                        location.reload();
-                    } else {
-                        alert('Failed to update review');
+                .then(async response => {
+                    const data = await response.json();
+                    if (!response.ok) {
+                        throw new Error(data.message || 'Failed to update review');
                     }
+                    return data;
                 })
-                .catch(error => console.error('Error:', error));
+                .then(data => {
+                    closeEditModal();
+                    location.reload();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message);
+                });
         });
 
         // Close modal ketika klik di luar
