@@ -3,8 +3,10 @@
 namespace App\Providers;
 
 use App\Models\Review;
+use App\Models\Studio;
 use App\Policies\AdminReviewPolicy;
 use App\Policies\ReviewPolicy;
+use App\Policies\StudioPolicy;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,7 +21,8 @@ class AppServiceProvider extends ServiceProvider
 
     protected $policies = [
         Review::class => ReviewPolicy::class,
-        Review::class => AdminReviewPolicy::class
+        Review::class => AdminReviewPolicy::class,
+        Studio::class => StudioPolicy::class,
     ];
 
     /**

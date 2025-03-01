@@ -28,6 +28,9 @@
                         <x-nav-link :href="route('admin.movies.index')" :active="request()->routeIs('admin.movies.*')">
                             {{ __('Manage Movies') }}
                         </x-nav-link>
+                        <x-nav-link :href="route('admin.studios.index')" :active="request()->routeIs('admin.studios.*')">
+                            {{ __('Manage Studios') }}
+                        </x-nav-link>
                     @endrole
                 </div>
             </div>
@@ -119,6 +122,9 @@
             @role('admin')
                 <x-responsive-nav-link :href="route('admin.movies.index')" :active="request()->routeIs('admin.movies.*')">
                     {{ __('Manage Movies') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.studios.index')" :active="request()->routeIs('admin.studios.*')">
+                    {{ __('Manage Studio') }}
                 </x-responsive-nav-link>
             @endrole
         </div>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Movie;
 use App\Models\Review;
+use App\Models\Studio;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -15,7 +16,8 @@ class DashboardController extends Controller
         $totalUsers = User::count();
         $totalReviews = Review::count();
         $latestMovies = Movie::orderBy('release_date', 'desc')->take(5)->get();
+        $totalStudios = Studio::count();
 
-        return view('admin.dashboard', compact('totalMovies', 'totalUsers', 'totalReviews', 'latestMovies'));
+        return view('admin.dashboard', compact('totalMovies', 'totalUsers', 'totalReviews', 'latestMovies', 'totalStudios')); // ✅ Fix
     }
 }
